@@ -2,7 +2,6 @@
 
 Generate Python types for data types used in the Datatrans OpenAPI specification.
 
-
 ## Development Setup
 
 ```

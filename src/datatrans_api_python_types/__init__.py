@@ -15,7 +15,7 @@ class UserError(Exception):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('specification_file', type=Path)
+    parser.add_argument("specification_file", type=Path)
 
     return parser.parse_args()
 
@@ -24,8 +24,8 @@ def entry_point():
     try:
         generate(**vars(parse_args()))
     except UserError as e:
-        log(f'error: {e}')
+        log(f"error: {e}")
         sys.exit(1)
     except KeyboardInterrupt:
-        log('Operation interrupted.')
+        log("Operation interrupted.")
         sys.exit(130)
