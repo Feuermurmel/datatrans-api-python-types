@@ -6,11 +6,11 @@ from openapi3 import OpenAPI
 from openapi3.schemas import Schema
 
 
-def indent(string):
+def indent(string: str) -> str:
     return textwrap.indent(string, "    ")
 
 
-def wrap_comment(comment):
+def wrap_comment(comment: str) -> str:
     return "\n".join(
         j
         for i in comment.splitlines()
@@ -31,12 +31,12 @@ ref_overrides = {
 
 
 class Printer:
-    def __init__(self):
+    def __init__(self) -> None:
         print("from typing import Any, List, Dict, TypedDict, Literal")
 
-        self._printed_schemas = {}
+        self._printed_schemas: dict[tuple[str, ...], tuple[str, str]] = {}
 
-    def _print_schema(self, schema: Schema):
+    def _print_schema(self, schema: Schema) -> tuple[str, str]:
         comment = schema.description or ""
 
         if schema.type == "object":
@@ -46,7 +46,7 @@ class Printer:
                 name = schema.path[-1]
                 ref = ref_overrides.get(name, name.split(".")[-1].split("$")[-1])
 
-                def field(field_name, field_schema):
+                def field(field_name: str, field_schema: Schema) -> str:
                     r, c = self.get_schema_ref(field_schema)
 
                     if field_name in (schema.required or []):
@@ -104,7 +104,7 @@ class Printer:
 
         return ref, comment
 
-    def get_schema_ref(self, schema: Schema) -> str:
+    def get_schema_ref(self, schema: Schema) -> tuple[str, ...]:
         key = tuple(schema.path)
         ref = self._printed_schemas.get(key)
 
@@ -114,7 +114,7 @@ class Printer:
         return ref
 
 
-def generate(specification_file: Path):
+def generate(specification_file: Path) -> None:
     api = OpenAPI(json.loads(specification_file.read_bytes()))
 
     printer = Printer()
