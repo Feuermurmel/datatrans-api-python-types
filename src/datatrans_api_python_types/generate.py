@@ -1,7 +1,10 @@
 import json
 import textwrap
+from io import StringIO
 from pathlib import Path
 
+from black import Mode
+from black import format_str
 from openapi3 import OpenAPI
 from openapi3.schemas import Schema
 
@@ -30,31 +33,32 @@ ref_overrides = {
 }
 
 
-class Printer:
+class Generator:
     def __init__(self) -> None:
-        print("from typing import Any, List, Dict, TypedDict, Literal")
-
+        self._output = StringIO()
         self._printed_schemas: dict[tuple[str, ...], tuple[str, str]] = {}
+
+        print("from typing import Any, TypedDict, Literal", file=self._output)
 
     def _print_schema(self, schema: Schema) -> tuple[str, str]:
         comment = schema.description or ""
 
         if schema.type == "object":
             if schema.properties is None:
-                ref = "Dict[str, Any]"
+                ref = "dict[str, Any]"
             else:
                 name = schema.path[-1]
                 ref = ref_overrides.get(name, name.split(".")[-1].split("$")[-1])
 
                 def field(field_name: str, field_schema: Schema) -> str:
-                    r, c = self.get_schema_ref(field_schema)
+                    ref, comment = self.get_schema_ref(field_schema)
 
                     if field_name in (schema.required or []):
-                        c = f"{c}\n" f"Required."
+                        comment = f"{comment}\n" f"Required."
 
                     return (
-                        f"{wrap_comment(c)}\n" if c else ""
-                    ) + f"{repr(field_name)}: {r}"
+                        f"{wrap_comment(comment)}\n" if comment else ""
+                    ) + f"{repr(field_name)}: {ref}"
 
                 fields_str = ",\n".join(
                     field(k, v) for k, v in schema.properties.items()
@@ -78,13 +82,14 @@ class Printer:
                     f"\n"
                     f"{wrap_comment(description)}\n"
                     f"{ref} = TypedDict(\n"
-                    f"{indent(typeddict_args_str)})"
+                    f"{indent(typeddict_args_str)})",
+                    file=self._output,
                 )
         elif schema.type == "array":
             r, c = self.get_schema_ref(schema.items)
 
             comment = comment or c
-            ref = f"List[{r}]"
+            ref = f"list[{r}]"
         elif schema.enum:
             literals_str = ", ".join(map(repr, schema.enum))
 
@@ -113,11 +118,16 @@ class Printer:
 
         return ref
 
+    def get_output(self) -> str:
+        return self._output.getvalue()
 
-def generate(specification_file: Path) -> None:
+
+def generate(specification_file: Path) -> str:
     api = OpenAPI(json.loads(specification_file.read_bytes()))
 
-    printer = Printer()
+    generator = Generator()
 
     for i in api.components.schemas.values():
-        printer.get_schema_ref(i)
+        generator.get_schema_ref(i)
+
+    return format_str(generator.get_output(), mode=Mode())

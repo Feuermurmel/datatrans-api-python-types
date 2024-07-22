@@ -1,7 +1,7 @@
 [project]
 name = "datatrans-api-python-types"
 version = "0.1.0"
-dependencies = ["openapi3~=1.7.0"]
+dependencies = ["openapi3~=1.7.0", "black"]
 
 [project.optional-dependencies]
 dev = ["pytest", "mypy"]

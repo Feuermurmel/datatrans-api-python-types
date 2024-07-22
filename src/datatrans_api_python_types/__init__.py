@@ -23,7 +23,7 @@ def parse_args() -> Namespace:
 
 def entry_point() -> None:
     try:
-        generate(**vars(parse_args()))
+        sys.stdout.write(generate(**vars(parse_args())))
     except UserError as e:
         log(f"error: {e}")
         sys.exit(1)
