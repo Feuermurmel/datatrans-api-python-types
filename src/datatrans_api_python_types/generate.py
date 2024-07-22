@@ -34,11 +34,16 @@ ref_overrides = {
 
 
 class Generator:
-    def __init__(self) -> None:
+    def __init__(self, module_comment: str) -> None:
         self._output = StringIO()
         self._printed_schemas: dict[tuple[str, ...], tuple[str, str]] = {}
 
-        print("from typing import Any, TypedDict, Literal", file=self._output)
+        print(
+            f"{wrap_comment(module_comment)}"
+            f"\n"
+            f"\nfrom typing import Any, TypedDict, Literal",
+            file=self._output,
+        )
 
     def _print_schema(self, schema: Schema) -> tuple[str, str]:
         comment = schema.description or ""
@@ -125,7 +130,10 @@ class Generator:
 def generate(specification_file: Path) -> str:
     api = OpenAPI(json.loads(specification_file.read_bytes()))
 
-    generator = Generator()
+    generator = Generator(
+        f"Generated using https://github.com/Feuermurmel/datatrans-api-python-types\n"
+        f"from file {specification_file.name}."
+    )
 
     for i in api.components.schemas.values():
         generator.get_schema_ref(i)
